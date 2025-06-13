@@ -29,32 +29,29 @@ class UserController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $validated = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => [
-                'required',
-                'string',
-                'email',
-                'max:255',
-                Rule::unique('users', 'email'), // use table name and column explicitly
-            ],
-            'password' => ['required', 'string', 'min:8'],
-            'roles' => ['nullable'],
-            'roles.*' => ['string', 'exists:roles,name'], // validate each role exists if provided
-        ])->validate();
+{
+    $validated = Validator::make($request->all(), [
+        'name' => ['required', 'string', 'max:255'],
+        'email' => ['required', 'email', Rule::unique('users')],
+        'password' => ['required', 'string', 'min:8', 'confirmed'],
+        'roles' => ['required', 'array'],
+        'roles.*' => ['exists:roles,id']  // Changed to validate role IDs
+    ])->validate();
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-        ]);
+    $user = User::create([
+        'name' => $validated['name'],
+        'email' => $validated['email'],
+        'password' => Hash::make($validated['password']),
+    ]);
 
-        if (!empty($validated['roles'])) {
-            $user->assignRole($validated['roles']);
-        }
-        return to_route('users.index')->with("success", "User created successfully");
+    // Update to use role IDs directly
+    if (!empty($validated['roles'])) {
+        $user->syncRoles($validated['roles']);
     }
+
+    return to_route('users.index')
+        ->with('success', 'User created successfully');
+}
 
     public function edit($id)
     {
@@ -68,12 +65,26 @@ class UserController extends Controller
     }
 
     public function update(Request $request, $id)
-    {
-        $user = User::findOrFail($id);
-        $user->save();
-        $user->syncRoles($request->roles);
-        return to_route('users.index')->with("success", "User updated successfully");
-    }
+{
+    $user = User::findOrFail($id);
+    
+    $validated = Validator::make($request->all(), [
+        'name' => ['required', 'string', 'max:255'],
+        'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+        'roles' => ['required', 'array'],
+        'roles.*' => ['exists:roles,id']
+    ])->validate();
+
+    $user->update([
+        'name' => $validated['name'],
+        'email' => $validated['email'],
+    ]);
+
+    $user->syncRoles($validated['roles']);
+
+    return to_route('users.index')
+        ->with('success', 'User updated successfully');
+}
 
     public function destroy($id)
     {

@@ -14,8 +14,8 @@ import { useState } from 'react';
 
 export default function UserPage({ users }) {
     const { auth } = usePage().props;
-    const can = auth?.can ?? {}; 
-    
+    const can = auth?.can ?? {};
+
     const datasList = users.data;
     const [confirmingDataDeletion, setConfirmingDataDeletion] = useState(false);
     const [dataEdit, setDataEdit] = useState({})
@@ -47,6 +47,8 @@ export default function UserPage({ users }) {
             onFinish: () => reset(),
         });
     };
+
+  
     const headWeb = 'User List'
     const linksBreadcrumb = [{ title: 'Home', url: '/' }, { title: headWeb, url: '' }];
 
@@ -99,9 +101,17 @@ export default function UserPage({ users }) {
                                                                 <i className='fas fa-edit'></i> Edit
                                                             </Link>
                                                         )}
-                                                        {/* <button onClick={() => confirmDataDeletion(item)} type="button" className="btn btn-danger btn-xs">
-                                                            <i className='fas fa-trash'></i> Delete
-                                                        </button> */}
+                                                        {can['user-delete'] && (
+                                                            <button
+                                                                onClick={() => confirmDataDeletion(item)}
+                                                                type="button"
+                                                                className="btn btn-danger btn-xs"
+                                                                disabled={item.id === auth.user.id} // Prevent self-deletion
+                                                                title={item.id === auth.user.id ? "You cannot delete your own account" : "Delete user"}
+                                                            >
+                                                                <i className='fas fa-trash'></i> Delete
+                                                            </button>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             ))

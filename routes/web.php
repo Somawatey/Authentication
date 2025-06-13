@@ -6,7 +6,8 @@ use App\Http\Controllers\RolesController;
 use App\Http\Controllers\UserController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\TwoFactorAuthenticatedSessionController;
+use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
+
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -18,6 +19,7 @@ Route::get('/', function () {
     ]);
 });
 
+
 Route::middleware(['web'])->group(function () {
     Route::get('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'create'])
         ->name('two-factor.login');
@@ -28,6 +30,7 @@ Route::middleware(['web'])->group(function () {
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
